@@ -46,6 +46,9 @@ COPY ./docker/entrypoint.sh /entrypoint.sh
 RUN chown ${USERNAME}:${USERNAME} /entrypoint.sh \
     && chmod +x /entrypoint.sh \
     && sed -i'' -e "s/^\(DEVELOPER_NAME\)=.*$/\1=${USERNAME}/g" /entrypoint.sh
-ENTRYPOINT [ "/entrypoint.sh" ]
 
+ENTRYPOINT [ "/entrypoint.sh" ]
 CMD [ "bash" "-l" ]
+
+# 初期ディレクトリの指定
+WORKDIR ${ROBOCON_WS}
