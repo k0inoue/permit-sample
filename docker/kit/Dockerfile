@@ -9,7 +9,6 @@ RUN apt-get update -q && apt-get upgrade -yq && apt-get install -y --no-install-
 
 # ユーザ作成
 ARG USERNAME=developer
-ARG ROBOCON_WS=/home/${USERNAME}/catkin_ws
 RUN useradd --create-home --home-dir /home/${USERNAME} --shell /bin/bash --user-group --groups adm,sudo,video,audio ${USERNAME} \
     && echo ${USERNAME}:${USERNAME} | chpasswd \
     && echo "${USERNAME} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
@@ -19,6 +18,11 @@ RUN mkdir -p /home/${USERNAME}/.config/catkin/verb_aliases \
     && mkdir -p /home/${USERNAME}/.ros/log \
     && mkdir -p /home/${USERNAME}/.gazebo/log
 
+# ワークスペース作成
+#------------------------------------------------
+ARG ROBOCON_WS=/home/${USERNAME}/catkin_ws
+RUN mkdir -p ${ROBOCON_WS}/src/burger_war_kit \
+    && mkdir -p ${ROBOCON_WS}/logs
 # 必要なファイルを展開
 COPY ./docker/templates/ /home/${USERNAME}/
 
