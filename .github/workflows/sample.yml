@@ -1,30 +1,81 @@
 # This is a basic workflow that is manually triggered
 
-name: Manual workflow
+name: Sample Workflow
 
 # Controls when the action will run. Workflow runs when manually triggered using the UI
 # or API.
 on:
+  push:
+    branches: main
+
   workflow_dispatch:
-    # Inputs the workflow accepts.
-    inputs:
-      name:
-        # Friendly description to be shown in the UI instead of 'name'
-        description: 'Person to greet'
-        # Default value if no value is explicitly provided
-        default: 'World'
-        # Input has to be provided for the workflow to run
-        required: true
+
+# 環境変数の設定
+env:
+  DOCKER_BUILDKIT: 1
+  IMAGE_NAME: sample-image
+  DOCKER_FILE: ./Dockerfile
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "greet"
-  greet:
-    # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+  # ビルドとテストを実施し、テストにPASSすれば、仮バージョンでプッシュ
+  build-test:
+    runs-on: ubuntu-20.04
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ github.event.inputs.name }}"
+      # 環境準備
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Dockerのversion確認
+      - name: Print Docker Version
+        run: |
+          docker version
+
+      # ビルド
+      - name: Build Docker Image
+        run: |
+          docker build --file ${{ env.DOCKER_FILE }} --tag ${{ env.IMAGE_NAME }} .
+
+      # コンテナ起動
+      - name: Launch Docker Container
+        run: |
+          mkdir -p ${GITHUB_WORKSPACE}/catkin_ws/logs
+          docker run \
+            --name ${{ env.IMAGE_NAME }} \
+            -d \
+            --privileged \
+            --net host \
+            --mount type=bind,src=${GITHUB_WORKSPACE}/catkin_ws/logs,dst=/home/developer/catkin_ws/logs \
+            --device /dev/snd \
+            -v /dev/shm \
+            -e HOST_USER_ID=$(id -u) \
+            -e HOST_GROUP_ID=$(id -g) \
+            ${{ env.IMAGE_NAME }} \
+            tail -f /dev/null
+          docker ps -a
+          docker logs ${{ env.IMAGE_NAME }}
+
+      # 権限確認
+      - name: directory permition
+        run: |
+          echo "~/ ============================================================"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "ls -la ~/"
+          echo "~/.ros ============================================================"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "ls -la ~/.ros"
+          echo "~/.gazebo ============================================================"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "ls -la ~/.gazebo"
+          echo "~/catkin_ws ============================================================"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "ls -la ~/catkin_ws"
+          echo "~/catkin_ws/logs ============================================================"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "ls -la ~/catkin_ws/logs"
+
+
+      # ディレクトリ作成サンプル
+      - name: mkdir test
+        run: |
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "mkdir ~/test"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "mkdir ~/.ros/test"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "mkdir ~/.gazebo/test"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "mkdir ~/catkin_ws/test"
+          docker exec -u developer -t ${{ env.IMAGE_NAME }} bash -l -c "mkdir ~/catkin_ws/test/logs"
