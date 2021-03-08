@@ -1,5 +1,11 @@
 FROM ubuntu:18.04
 
+# インストール
+RUN apt-get update -q && apt-get upgrade -yq && apt-get install -y --no-install-recommends \
+        git \
+        gosu \
+    && rm -rf /var/lib/apt/lists/*
+
 # ユーザ作成
 ARG USERNAME=developer
 ARG ROBOCON_WS=/home/${USERNAME}/catkin_ws
