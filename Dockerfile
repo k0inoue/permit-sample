@@ -1,5 +1,5 @@
 ARG ROS_DISTRO=melodic
-FROM osrf/ros:${ROS_DISTRO}-desktop
+FROM osrf/ros:${ROS_DISTRO}-desktop-full
 
 # インストール
 RUN apt-get update -q && apt-get upgrade -yq && apt-get install -y --no-install-recommends \
