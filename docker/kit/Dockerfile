@@ -19,8 +19,10 @@ RUN mkdir -p /home/${USERNAME}/.config/catkin/verb_aliases \
     && mkdir -p /home/${USERNAME}/.ros/log \
     && mkdir -p /home/${USERNAME}/.gazebo/log
 
+# 必要なファイルを展開
+COPY ./docker/templates/ /home/${USERNAME}/
+
 # 永続化したい設定を.bashrc/.bash_profileに追加
-COPY ./export_env /home/${USERNAME}/export_env
 RUN cat /home/${USERNAME}/export_env \
     | sed "s@{{ROBOCON_WS}}@${ROBOCON_WS}@g" \
     | sed "s@{{ROS_DISTRO}}@${ROS_DISTRO}@g" \
@@ -37,7 +39,7 @@ ENV TZ Asia/Tokyo
 WORKDIR ${ROBOCON_WS}
 
 # 起動時の実行コマンドの指定
-COPY ./entrypoint.sh /entrypoint.sh
+COPY ./docker/entrypoint.sh /entrypoint.sh
 RUN chown ${USERNAME}:${USERNAME} /entrypoint.sh \
     && chmod +x /entrypoint.sh \
     && sed -i'' -e "s/^\(DEVELOPER_NAME\)=.*$/\1=${USERNAME}/g" /entrypoint.sh
